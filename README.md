@@ -1,7 +1,7 @@
 # ACPs-TrainingCamp-MenDaKai-walchwil
 仓库介绍：An auto trend detect-download-pdf2text agent for cs students, with SKILL.md
 
-*我对ACPs的理解：*
+**我对ACPs的理解：**
 **从工具集成到生态协议：构建异构智能体的分布式网络**
 
 目前，我们正处于从单体智能向群体智能跨越的关键时点。我觉得**ACPs（智能体通信协议集）**不仅是技术层面的通信规范，更是智能体互联网（Internet of Agents, IoA）的关键信任锚点。
