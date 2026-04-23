@@ -7,7 +7,7 @@ An auto trend detect-download-pdf2text agent for cs students, with SKILL.md
 
 **我的项目经验与技术基础：**
 
-我目前大三，深度学习理论、强化学习算法、agent、harness工程基础扎实；在寒假期间曾docker部署、调试openclaw；最近8个月，在王思野老师、徐蔚然老师、李佩佩老师的指导下进行过多次科研探索。近期作为项目负责人领导软件创新大赛项目，做的是LangGraph编排的端侧ai4edu智能体应用，安卓原生APP。此外，正在进行一项提升4B-8B左右小模型工具调用（function call)能力的科研研究，攻关toolathlon基准测试数据集。
+我目前大三，深度学习理论、强化学习算法、agent、harness工程基础扎实；在寒假期间曾docker部署、调试openclaw；最近8个月，在王思野教授、徐蔚然副教授、李佩佩副教授的指导下进行过多次科研探索。近期作为项目负责人领导软件创新大赛项目，做的是LangGraph编排的端侧ai4edu智能体应用，安卓原生APP。此外，正在进行一项提升4B-8B左右小模型工具调用（function call)能力的科研研究，攻关toolathlon基准测试数据集。
 
 
 **我对ACPs的理解：**
