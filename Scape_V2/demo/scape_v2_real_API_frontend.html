@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scape</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <style>
+        :root {
+            --primary: #007aff;
+            --secondary: #00d1b2;
+            --bg: #f5f7fa;
+            --card: #ffffff;
+            --text: #2d3748;
+            --light-text: #718096;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            display: grid;
+            grid-template-rows: 15vh 1fr auto; /* 调整header高度为15% */
+            height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .header h1 {
+            margin: 0.5rem 0;
+            font-size: 1.8rem;
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .main {
+            display: grid;
+            grid-template-columns: 3fr 1fr; /* 调整为3:1比例 */
+            gap: 1.5rem;
+            padding: 1.5rem;
+            overflow: hidden;
+        }
+
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            background: var(--card);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke="%23eee" stroke-width="0.5"/></svg>');
+            background-size: 20px 20px;
+        }
+
+        .input-area {
+            display: flex;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            background: white;
+            align-items: center;
+        }
+
+        .file-upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border: 2px dashed var(--border);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--light-text);
+            margin-right: 1rem;
+            min-width: 120px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-label:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .file-upload-label svg {
+            margin-bottom: 8px;
+        }
+
+        .prompt-builder {
+            background: var(--card);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .prompt-builder h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .step {
+            margin-bottom: 2rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .step-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .option-card {
+            border: 2px solid var(--border);
+            border-radius: 0.75rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .option-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .option-card.selected {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.1), rgba(0, 209, 178, 0.1));
+        }
+
+        .option-header {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .option-title {
+            font-weight: 500;
+        }
+
+        .option-details {
+            max-height: 0;
+            overflow: hidden;
+            background-color: rgba(245, 245, 245, 0.5);
+            padding: 0 1rem;
+            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+            color: var(--light-text);
+            font-size: 0.9rem;
+        }
+
+        .option-card:hover .option-details {
+            max-height: 250px;
+            padding: 0.75rem 1rem;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            resize: none;
+            font-family: inherit;
+            min-height: 60px;
+            max-height: 200px;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            margin-left: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            max-width: 80%;
+            line-height: 1.6;
+        }
+
+        .user-message {
+            background: #e3f2fd;
+            margin-left: auto;
+            border-bottom-right-radius: 2px;
+        }
+
+        .bot-message {
+            background: white;
+            border: 1px solid var(--border);
+            margin-right: auto;
+            border-bottom-left-radius: 2px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #eee;
+            margin-bottom: 1.5rem;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Markdown渲染增强 */
+        .bot-message h1,
+        .bot-message h2,
+        .bot-message h3 {
+            margin-top: 0.5em;
+            margin-bottom: 0.3em;
+            color: var(--primary);
+        }
+
+        .bot-message ul,
+        .bot-message ol {
+            padding-left: 1.5em;
+        }
+
+        .bot-message code {
+            background: #f5f5f5;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .bot-message pre {
+            background: #f8f8f8;
+            padding: 0.8em;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .bot-message table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+
+        .bot-message th,
+        .bot-message td {
+            border: 1px solid #ddd;
+            padding: 0.5em;
+        }
+
+        .bot-message blockquote {
+            border-left: 3px solid var(--primary);
+            padding-left: 1em;
+            color: #666;
+            margin-left: 0;
+        }
+
+        /* History Section Styles */
+        .history-section {
+            margin-top: 2rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1.5rem;
+        }
+
+        .history-section button {
+            width: 100%;
+            margin-left: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            max-height: 350px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: #fdfdfd;
+        }
+
+        .history-list-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 0.95rem;
+            color: var(--text);
+        }
+
+        .history-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-list-item:hover {
+            background-color: #f0f8ff;
+            color: var(--primary);
+        }
+
+        .history-list-item strong {
+            color: var(--primary);
+        }
+
+        .history-detail-view {
+            background-color: #f9f9f9;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            max-height: 450px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--light-text);
+        }
+
+        .history-detail-view h4 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .history-detail-view p {
+            margin-bottom: 0.5em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Scape</h1>
+        <p>Understand.Don't memorize.</p>
+        <p>Learn principles,not formulas.<p>
+    </div>
+
+    <div class="main">
+        <div class="chat-area">
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="messages" id="messages">
+                <div class="message bot-message">
+                    同学你好！欢迎使用知识导航助手。
+                    请上传课程资料或直接输入你的问题，然后通过右侧的引导式提问构建器来优化你的提问。
+                </div>
+            </div>
+            <div class="input-area">
+                <label for="file-upload" class="file-upload-label" id="file-upload-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>上传教材/课件</span>
+                    <input type="file" id="file-upload" accept=".pdf" style="display:none;">
+                </label>
+                <textarea id="user-input" placeholder="输入你的问题..."></textarea>
+                <button id="send-btn">发送</button>
+            </div>
+        </div>
+
+        <div class="prompt-builder" id="prompt-builder">
+            <div id="prompt-builder-steps-container">
+                <h3>提问构建器 (1/5)</h3>
+                <div class="step" id="step1">
+                    <div class="step-title">你当前的学习状态是？</div>
+                    <div class="options">
+                        <div class="option-card" data-prompt-key="first-contact" data-prompt-value="初次接触（通俗类比）">
+                            <div class="option-header">
+                                <div class="option-title">初次接触</div>
+                            </div>
+                            <div class="option-details">
+                                对该领域知识几乎没有了解，需要从最基础的概念开始，使用生活化的类比帮助理解。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="some-knowledge" data-prompt-value="略知一二（需系统化）">
+                            <div class="option-header">
+                                <div class="option-title">略知一二</div>
+                            </div>
+                            <div class="option-details">
+                                对基本概念有一定了解，但缺乏系统性，需要梳理知识体系，建立完整的知识框架。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="confused" data-prompt-value="概念混淆（需要对比澄清）">
+                            <div class="option-header">
+                                <div class="option-title">概念混淆</div>
+                            </div>
+                            <div class="option-details">
+                                对相似概念容易混淆，需要通过对比分析和正反示例来澄清理解上的误区。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="exam-focused" data-prompt-value="备考导向（需要重点提炼）">
+                            <div class="option-header">
+                                <div class="option-title">备考导向</div>
+                            </div>
+                            <div class="option-details">
+                                以通过考试为目标，需要明确考试重点、高频考点和答题技巧，进行有针对性的学习。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="step" id="step2" style="display:none;">
+                    <div class="step-title">你更关注哪个学习维度？</div>
+                    <div class="options">
+                        <div class="option-card" data-prompt-key="conceptual" data-prompt-value="概念理解（定义/原理/本质）">
+                            <div class="option-header">
+                                <div class="option-title">概念理解</div>
+                            </div>
+                            <div class="option-details">
+                                聚焦于核心概念的定义、基本原理和内在逻辑，帮助你建立扎实的理论基础。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="structural" data-prompt-value="知识结构（章节关系）">
+                            <div class="option-header">
+                                <div class="option-title">知识结构</div>
+                            </div>
+                            <div class="option-details">
+                                关注知识点之间的联系和整体框架，构建系统的知识网络，帮助你从宏观角度把握内容。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="application" data-prompt-value="应用场景（实际问题）">
+                            <div class="option-header">
+                                <div class="option-title">应用场景</div>
+                            </div>
+                            <div class="option-details">
+                                强调知识在实际问题中的应用方法和技巧，通过案例分析提升解决实际问题的能力。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="historical" data-prompt-value="发展脉络（历史演进/关键突破）">
+                            <div class="option-header">
+                                <div class="option-title">发展脉络</div>
+                            </div>
+                            <div class="option-details">
+                                梳理知识的历史发展过程和关键里程碑，理解理论的演变背景和未来发展趋势。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="step" id="step3" style="display:none;">
+                    <div class="step-title">你希望获得什么形式的输出？</div>
+                    <div class="options">
+                        <div class="option-card" data-prompt-key="mindmap" data-prompt-value="思维导图（可视化结构）">
+                            <div class="option-header">
+                                <div class="option-title">思维导图</div>
+                            </div>
+                            <div class="option-details">
+                                以思维导图形式呈现知识结构，帮助你可视化知识点之间的关系，便于记忆和理解。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="key-points" data-prompt-value="核心要点（bullet points）">
+                            <div class="option-header">
+                                <div class="option-title">核心要点</div>
+                            </div>
+                            <div class="option-details">
+                                以简洁的要点形式列出关键知识点，使用emoji图标增强可读性，便于快速浏览和复习。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="flowchart" data-prompt-value="学习流程图（步骤顺序）">
+                            <div class="option-header">
+                                <div class="option-title">学习流程图</div>
+                            </div>
+                            <div class="option-details">
+                                以流程图形式展示学习路径和步骤顺序，清晰呈现学习过程中的关键节点和先后关系。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="qna" data-prompt-value="自测问题集（理解检查）">
+                            <div class="option-header">
+                                <div class="option-title">自测问题集</div>
+                            </div>
+                            <div class="option-details">
+                                生成一系列关键自测问题及简要答案，帮助你检验对知识点的理解程度和掌握情况。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step" id="step4" style="display:none;">
+                    <div class="step-title">你更倾向哪种思维模式？</div>
+                    <div class="options">
+                        <div class="option-card" data-prompt-key="deductive" data-prompt-value="演绎推理（一般到特殊）">
+                            <div class="option-header">
+                                <div class="option-title">演绎推理</div>
+                            </div>
+                            <div class="option-details">
+                                从一般原理出发，推导出具体情况下的结论，适合深入理解特定案例和应用场景。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="inductive" data-prompt-value="归纳总结（特殊到一般）">
+                            <div class="option-header">
+                                <div class="option-title">归纳总结</div>
+                            </div>
+                            <div class="option-details">
+                                通过分析具体案例，总结出一般规律和原理，适合从实践中提炼理论知识。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="analogical" data-prompt-value="类比迁移（跨领域连接）">
+                            <div class="option-header">
+                                <div class="option-title">类比迁移</div>
+                            </div>
+                            <div class="option-details">
+                                通过建立跨领域的类比和联系，将已有的知识和经验迁移到新领域，促进创新思维。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="critical" data-prompt-value="批判思维（质疑/反思）">
+                            <div class="option-header">
+                                <div class="option-title">批判思维</div>
+                            </div>
+                            <div class="option-details">
+                                对现有理论和观点进行质疑和反思，分析其优缺点和适用范围，培养独立思考能力。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step" id="step5" style="display:none;">
+                    <div class="step-title">你偏好哪种学习资源？</div>
+                    <div class="options">
+                        <div class="option-card" data-prompt-key="textbook" data-prompt-value="教材精读（深入理解）">
+                            <div class="option-header">
+                                <div class="option-title">教材精读</div>
+                            </div>
+                            <div class="option-details">
+                                推荐经典教材和精读方法，帮助你深入理解核心概念和理论体系，适合系统性学习。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="video" data-prompt-value="视频教程（视觉化学习）">
+                            <div class="option-header">
+                                <div class="option-title">视频教程</div>
+                            </div>
+                            <div class="option-details">
+                                推荐优质视频教程和观看指南，通过视觉化的讲解和演示，帮助你更直观地理解知识。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="practice" data-prompt-value="练习题（强化应用）">
+                            <div class="option-header">
+                                <div class="option-title">练习题</div>
+                            </div>
+                            <div class="option-details">
+                                设计阶梯式练习题和解题思路，通过反复练习强化知识应用能力，适合巩固和提高。
+                            </div>
+                        </div>
+                        <div class="option-card" data-prompt-key="case" data-prompt-value="案例分析（实际应用）">
+                            <div class="option-header">
+                                <div class="option-title">案例分析</div>
+                            </div>
+                            <div class="option-details">
+                                提供典型案例和分析框架，通过实际应用场景加深对知识的理解和掌握，培养解决问题的能力。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="final-step" style="display:none; text-align:center;">
+                    <h3>提问已优化完成！</h3>
+                    <div id="selected-options-summary" style="margin: 1rem 0; padding: 0.5rem; background-color: #f0f0f0; border-radius: 4px;text-align: left;"></div>
+                    <p>点击发送按钮获取结构化知识框架</p>
+                    <button id="reset-btn">重新构建</button>
+                </div>
+            </div>
+
+            <div class="history-section">
+                <button id="toggle-history-btn">回顾</button>
+                <div id="history-content" style="display:none;">
+                    <h4>历史记录</h4>
+                    <ul id="history-list" class="history-list">
+                    </ul>
+                    <div id="history-detail-view" class="history-detail-view" style="display:none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_CONFIG = {
+            DEEPSEEK: {
+                // IMPORTANT: Changed endpoint to your backend's URL
+                ENDPOINT: "http://127.0.0.1:5000/process", // Assuming backend runs on localhost:5000
+                KEY: "MY_DEEPSEEK_API_KEY_HERE" // This key is no longer directly used by frontend for authentication
+            },
+            MAX_TOKENS:8192
+        };
+
+        const HISTORY_COOKIE_NAME = "knowledgeAssistantHistory";
+        const MAX_HISTORY_RECORDS = 7;
+
+        let currentStep = 1;
+        let selectedOptions = []; // Stores { key, value } for selected options
+        let uploadedFile = null;
+        let historyVisible = false;
+
+        const fileUpload = document.getElementById('file-upload');
+        const fileUploadLabel = document.getElementById('file-upload-label');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const messagesContainer = document.getElementById('messages');
+        const progressBar = document.getElementById('progress');
+        const selectedOptionsSummary = document.getElementById('selected-options-summary');
+        const promptBuilderStepsContainer = document.getElementById('prompt-builder-steps-container'); // New
+        const toggleHistoryBtn = document.getElementById('toggle-history-btn'); // New
+        const historyContent = document.getElementById('history-content'); // New
+        const historyList = document.getElementById('history-list'); // New
+        const historyDetailView = document.getElementById('history-detail-view'); // New
+
+
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            highlight: (code) => hljs.highlightAuto(code).value
+        });
+
+        fileUpload.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                uploadedFile = e.target.files[0];
+                fileUploadLabel.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>${uploadedFile.name}</span>
+                `;
+                addMessage(`已上传文件: ${uploadedFile.name}`, 'bot');
+            }
+        });
+
+        document.querySelectorAll('.option-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll(`#step${currentStep} .option-card`).forEach(c => {
+                    c.classList.remove('selected');
+                });
+                this.classList.add('selected');
+
+                const promptKey = this.getAttribute('data-prompt-key');
+                const promptValue = this.getAttribute('data-prompt-value');
+                selectedOptions[currentStep-1] = { key: promptKey, value: promptValue };
+
+                setTimeout(() => {
+                    document.getElementById(`step${currentStep}`).style.display = 'none';
+                    currentStep++;
+
+                    if (currentStep <= 5) {
+                        document.getElementById(`step${currentStep}`).style.display = 'block';
+                        document.querySelector('#prompt-builder h3').textContent = `提问构建器 (${currentStep}/5)`;
+                        progressBar.style.width = `${currentStep * 20}%`;
+                    } else {
+                        document.getElementById('final-step').style.display = 'block';
+                        progressBar.style.width = '100%';
+                        document.querySelector('#prompt-builder h3').textContent = '提问构建完成';
+                        displaySelectedOptionsSummary();
+                    }
+                }, 300);
+            });
+        });
+
+        function displaySelectedOptionsSummary() {
+            const stepTitles = [
+                "学习维度",
+                "学习阶段",
+                "输出形式",
+                "思维模式",
+                "学习资源"
+            ];
+
+            let summaryHTML = "<ul>";
+            selectedOptions.forEach((option, index) => {
+                summaryHTML += `<li><strong>${stepTitles[index]}:</strong> ${option.value}</li>`;
+            });
+            summaryHTML += "</ul>";
+
+            selectedOptionsSummary.innerHTML = summaryHTML;
+        }
+
+        document.getElementById('reset-btn').addEventListener('click', function() {
+            resetPromptBuilder();
+        });
+
+        function resetPromptBuilder() {
+            currentStep = 1;
+            selectedOptions = [];
+            progressBar.style.width = '0%';
+            document.querySelectorAll('.step').forEach(step => step.style.display = 'none');
+            document.getElementById('step1').style.display = 'block';
+            document.getElementById('final-step').style.display = 'none';
+            document.querySelector('#prompt-builder h3').textContent = '提问构建器 (1/5)';
+            document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+            selectedOptionsSummary.innerHTML = '';
+        }
+
+
+        sendBtn.addEventListener('click', async function() {
+            const question = userInput.value.trim();
+            if (!question && !uploadedFile) {
+                alert('请输入问题或上传文件');
+                return;
+            }
+
+            // Save conversation history BEFORE sending to API
+            const currentConversation = {
+                timestamp: new Date().toISOString(),
+                question: question,
+                options: selectedOptions.map(opt => ({ key: opt.key, value: opt.value }))
+            };
+            saveHistory(currentConversation);
+
+            addMessage(question, 'user');
+            userInput.value = '';
+
+            const loadingMsg = addMessage('正在生成知识框架...', 'bot');
+
+
+            // now sends data to backend
+            try {
+                const response = await callDeepSeekAPI(question, selectedOptions, uploadedFile);
+                messagesContainer.removeChild(loadingMsg);
+                addMessage(response, 'bot');
+                resetPromptBuilder(); // Reset after successful send
+            } catch (error) {
+                messagesContainer.removeChild(loadingMsg);
+                addMessage(`生成失败: ${error.message}`, 'bot');
+                console.error('API调用错误:', error);
+            }
+        });
+
+
+        // This function handle the send order
+        async function callDeepSeekAPI(question, options, file) {
+            const formData = new FormData();
+            formData.append('question', question);
+              // Backend expects options as a JSON string of keys
+            formData.append('options', JSON.stringify(options.map(opt => opt.key)));
+            if (file) {
+                formData.append('file', file);
+            }
+
+            const response = await fetch(API_CONFIG.DEEPSEEK.ENDPOINT, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                // Changed error message to reflect backend errors
+                throw new Error(`Backend请求失败: ${response.status} - ${errorData.error || response.statusText}`);
+            }
+
+            const data = await response.json();
+            return data.answer; // Backend returns {'answer': ...}
+        }
+
+        async function extractTextFromPDF(file) {
+            // This function is illustrative for the frontend.
+            // In a real application, you'd send the PDF to a backend
+            // for actual text extraction (as in your Python backend code).
+            return new Promise((resolve) => {
+                if (!file) return resolve('');
+                resolve(`[已上传PDF文件: ${file.name}]`);
+            });
+        }
+
+        function addMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}-message`;
+            msgDiv.innerHTML = marked.parse(text);
+
+            setTimeout(() => {
+                document.querySelectorAll('.message pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }, 50);
+
+            messagesContainer.appendChild(msgDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            return msgDiv;
+        }
+
+        // --- Cookie Management and History Features ---
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';'); //提取document.cookie字符串键值对
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) { //在若干键值对里前缀匹配name
+                    try {
+                        return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
+                    }
+                    catch (e) {
+                        console.error("Failed to parse cookie:", e);
+                        return null;
+                    }
+                }
+            }
+            return null;
+        }
+
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + encodeURIComponent(JSON.stringify(value)) + expires + "; path=/";
+        }
+
+        function saveHistory(conversation) {       //Cookie模块的“main”函数，指导更新用户的会话历史记录到 Cookie 中.它将被callDeepSeekAPI调用
+            let history = getCookie(HISTORY_COOKIE_NAME) || []; //把历史记录存成数组，名为history
+            history.unshift(conversation); // 最新的conversation作为记录放在history数组最前面
+            if (history.length > MAX_HISTORY_RECORDS) {
+                history = history.slice(0, MAX_HISTORY_RECORDS); // 只保留7次的history
+            }
+            setCookie(HISTORY_COOKIE_NAME, history, 30); // 存30天
+            updateHistoryList(); // Update 前端显示的 history list
+        }
+
+        function loadHistory(index) {
+            const history = getCookie(HISTORY_COOKIE_NAME);
+            if (history && history[index]) {
+                const record = history[index];
+                userInput.value = record.question; // Load user's question
+                selectedOptions = record.options; // Load selected options
+
+                // Reset prompt builder to step 1 first
+                resetPromptBuilder();
+                // Then, simulate selections to update UI
+                selectedOptions.forEach((option, i) => {
+                    const stepElement = document.getElementById(`step${i + 1}`);
+                    if (stepElement) {
+                        const cardToSelect = stepElement.querySelector(`.option-card[data-prompt-key="${option.key}"]`);
+                        if (cardToSelect) {
+                            cardToSelect.classList.add('selected');
+                        }
+                    }
+                });
+
+                currentStep = selectedOptions.length + 1; // Set current step to after the last loaded option
+                if (currentStep > 5) currentStep = 5; // Cap at 5 if all are selected
+                progressBar.style.width = `${currentStep * 20}%`; // Update progress bar
+                document.querySelectorAll('.step').forEach(step => step.style.display = 'none'); // Hide all steps
+                document.getElementById('final-step').style.display = 'block'; // Show final step
+                document.querySelector('#prompt-builder h3').textContent = '提问构建完成'; // Update title
+                displaySelectedOptionsSummary(); // Display the summary of loaded options
+
+                // Show details view
+                historyDetailView.innerHTML = `
+                    <h4>历史提问详情 (${new Date(record.timestamp).toLocaleString()})</h4>
+                    <p><strong>提问:</strong> ${record.question}</p>
+                    <p><strong>已选选项:</strong></p>
+                    <ul>
+                        ${record.options.map(opt => `<li>${opt.value}</li>`).join('')}
+                    </ul>
+                    <p>请修改或直接点击“发送”按钮以重新提问。</p>
+                `;
+                historyDetailView.style.display = 'block';
+                // Hide the history list itself for clarity
+                historyList.style.display = 'none';
+            }
+        }
+
+        function updateHistoryList() {
+            const history = getCookie(HISTORY_COOKIE_NAME) || [];
+            historyList.innerHTML = ''; // Clear existing list
+            if (history.length === 0) {
+                historyList.innerHTML = '<li class="history-list-item">暂无历史记录。</li>';
+                return;
+            }
+
+            history.forEach((record, index) => {
+                const listItem = document.createElement('li');
+                listItem.className = 'history-list-item';
+                const date = new Date(record.timestamp);
+                const dateStr = date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'numeric', day: 'numeric' });
+                const timeStr = date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                listItem.innerHTML = `<strong>${dateStr} ${timeStr}</strong>: ${record.question.substring(0, 30)}...`;
+                listItem.addEventListener('click', () => loadHistory(index));
+                historyList.appendChild(listItem);
+            });
+        }
+
+        toggleHistoryBtn.addEventListener('click', () => {
+            historyVisible = !historyVisible;
+            if (historyVisible) {
+                promptBuilderStepsContainer.style.display = 'none'; // Hide prompt steps
+                historyContent.style.display = 'block'; // Show history section
+                toggleHistoryBtn.textContent = '返回构建器';
+                updateHistoryList();
+            } else {
+                promptBuilderStepsContainer.style.display = 'block'; // Show prompt steps
+                historyContent.style.display = 'none'; // Hide history section
+                historyDetailView.style.display = 'none'; // Hide detail view
+                historyList.style.display = 'block'; // Ensure list is visible if history becomes visible again
+                toggleHistoryBtn.textContent = '回顾';
+                resetPromptBuilder(); // Reset prompt builder state
+            }
+        });
+
+        // Initialize history list on page load
+        updateHistoryList();
+    </script>
+</body>
+</html>
