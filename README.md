@@ -1,7 +1,9 @@
 # ACPs-TrainingCamp-MenDaKai-walchwil
 **仓库介绍：** 
 
-An auto trend detect-download-pdf2text agent for cs students, with SKILL.md
+包含两个项目。
+Scape_v2是去年做的一个Web端AI for edu项目，通过精细的提示词工程，达到【高等教育场景下】用户体验明显优于基模的效果
+parer...agent是目前在做的一个小项目，目的是探索一下Agent使用体验边界。An auto trend detect-download-pdf2text agent for cs students, with SKILL.md
 主体Readme见项目主文件夹
 
 
